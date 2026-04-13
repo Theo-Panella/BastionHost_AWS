@@ -1,5 +1,5 @@
 .terraform
 aws
-*.tfstate.*
-*.lock.*
-*.tfstate
+
+terraform_files/*.tfstate
+terraform_files/*.lock.hcl
