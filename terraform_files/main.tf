@@ -10,15 +10,19 @@ data "aws_ami" "ubuntu"{
 
 # --- Arquitetura de Rede --- 
 resource "aws_vpc" "VPC1" {
-  cidr_block = "192.168.0.0/28"
+  cidr_block = "192.168.0.0/24"
   instance_tenancy = "default"
 }
 
 resource "aws_subnet" "subnets" {
   for_each = var.subnets
   vpc_id = aws_vpc.VPC1.id
-  cidr_block = each.value.cidr
+  cidr_block = each.value.cidr_block
   availability_zone = each.value.az
+
+  tags = {
+    Name = each.key
+  }
 }
 
 # --- Instancias ---
