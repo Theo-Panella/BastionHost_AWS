@@ -7,14 +7,19 @@ variable "subnets" {
   }
 }
 
-
-
-# ---  Instancias  ---
-variable "instance_type" {
-    type = string
-    description = "Instance type for Bastion-Host"
+variable "instance_configurations" {
+  default = {
+    most_recent = "true", instance_type = "t3.micro", ami_code = ["099720109477"]
+  }
 }
 
-variable "Bastion" {
-  
+#  Instancias  
+variable "EC2_instances" {
+    default = {
+        "Bastion" = {subnet = "subnetA"}
+        "Invasor" = {subnet = "subnetC"}
+        "Server_1" = {subnet = "subnetB"}
+        "Server_2" = {subnet = "subnetB"}
+    }
 }
+

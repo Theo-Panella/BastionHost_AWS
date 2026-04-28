@@ -25,7 +25,15 @@ resource "aws_subnet" "subnets" {
   }
 }
 
-# --- Instancias ---
-resource "aws_instance" "" {
+# --- Instancias ----
+resource "aws_instance" "instances" {
+  
+  for_each = var.EC2_instances
+  ami = data.aws_ami.ubuntu.id
+  instance_type = var.instance_configurations.instance_type
+  subnet_id = aws_subnet.subnets[each.value.subnet].id
 
+  tags = {
+    Name = each.key
+  }
 }
