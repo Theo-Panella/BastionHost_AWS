@@ -8,7 +8,7 @@ data "aws_ami" "ubuntu"{
   owners = var.instance_configurations.ami_code
 }
 
-# --- Arquitetura de Rede --- 
+# --- Componentes da Rede --- 
 resource "aws_vpc" "VPC1" {
   cidr_block = "192.168.0.0/24"
   instance_tenancy = "default"
@@ -24,6 +24,32 @@ resource "aws_subnet" "subnets" {
     Name = each.key
   }
 }
+
+# --- Politicas da Rede ---
+
+# --- ACLs ---
+resource "aws_network_acl" "acl_subnets" {
+  vpc_id = aws_vpc.VPC1.id
+  
+  egress = {
+    protocol = "",
+    rule_no = 1
+    action = "allow"
+    cidr_block = ""
+    from_port = 22
+    to_port = 22
+  }
+
+  ingress = {
+    protocol = "",
+    rule_no = 1
+    action = "allow"
+    cidr_block = ""
+    from_port = 22
+    to_port = 22
+  }
+}
+
 
 # --- Instancias ----
 resource "aws_instance" "instances" {
