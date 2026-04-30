@@ -9,7 +9,7 @@ variable "subnets" {
 
 variable "instance_configurations" {
   default = {
-    most_recent = "true", instance_type = "t3.micro", ami_code = ["099720109477"]
+    most_recent = "true", instance_type = "t3.micro"
   }
 }
 
