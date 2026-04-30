@@ -26,6 +26,14 @@ resource "aws_vpc" "VPC1" {
   instance_tenancy = "default"
 }
 
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.VPC1.id
+
+  tags = {
+    Name = "main-igw"
+  }
+}
+
 resource "aws_subnet" "subnets" {
   for_each = var.subnets
   vpc_id = aws_vpc.VPC1.id
@@ -41,28 +49,96 @@ resource "aws_subnet" "subnets" {
 # --- Politicas da Rede ---
 
 # --- ACLs ---
-resource "aws_network_acl" "acl_subnets" {
-  vpc_id = aws_vpc.VPC1.id
-  
-  egress = {
-    protocol = "",
+resource "aws_network_acl" "acl_subnetA" {
+  vpc_id = aws_vpc.VPC1.id                             
+  subnet_ids = [aws_subnet.subnets["subnetA"].id]           
+
+  egress {                                                   
+    protocol = "tcp"                                      
     rule_no = 1
     action = "allow"
-    cidr_block = ""
+    cidr_block = "0.0.0.0/0"
     from_port = 22
     to_port = 22
   }
 
-  ingress = {
-    protocol = "",
-    rule_no = 1
+  ingress {                                                  
+    protocol = "tcp"
+    rule_no = 2
     action = "allow"
-    cidr_block = ""
+    cidr_block = "0.0.0.0/0"
     from_port = 22
     to_port = 22
+  }
+
+  tags = {
+    Name = "ACL da Subnet A"
   }
 }
 
+resource "aws_network_acl" "acl_subnetB" {
+  vpc_id = aws_vpc.VPC1.id                             
+  subnet_ids = [aws_subnet.subnets["subnetB"].id]           
+
+  egress {                                                   
+    protocol = "tcp"                                      
+    rule_no = 1
+    action = "allow"
+    cidr_block = aws_subnet.subnets["subnetA"].cidr_block
+    from_port = 22
+    to_port = 22
+  }
+
+  ingress {                                                  
+    protocol = "tcp"
+    rule_no = 2
+    action = "allow"
+    cidr_block = aws_subnet.subnets["subnetA"].cidr_block
+    from_port = 22
+    to_port = 22
+  }
+
+  tags = {
+    Name = "ACL da Subnet B"
+  }
+}
+
+resource "aws_network_acl" "acl_subnetC" {
+  vpc_id = aws_vpc.VPC1.id                             
+  subnet_ids = [aws_subnet.subnets["subnetC"].id]           
+
+  egress {                                                   
+    protocol = "tcp"                                      
+    rule_no = 1
+    action = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port = 22
+    to_port = 22
+  }
+
+  ingress {                                                  
+    protocol = "tcp"
+    rule_no = 2
+    action = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port = 22
+    to_port = 22
+  }
+
+  tags = {
+    Name = "ACL da Subnet C"
+  }
+}
+
+resource "aws_route_table" "route_table" {
+  vpc_id = aws_vpc.VPC1.id
+  
+  route {
+    cidr_block = aws_subnet.subnets["subnetA"].cidr_block
+    gateway_id = aws_internet_gateway.gw.id
+  }
+
+}
 
 # --- Instancias ----
 resource "aws_instance" "instances" {
