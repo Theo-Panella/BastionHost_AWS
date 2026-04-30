@@ -1,9 +1,9 @@
 # ---  Subnets  ---
 variable "subnets" {
   default = {
-    "subnetA" = {cidr_block = "192.168.0.0/26" , az = "us-west-2a"}
-    "subnetB" = {cidr_block = "192.168.0.64/26", az = "us-west-2a"}
-    "subnetC" = {cidr_block = "192.168.0.128/26", az = "us-west-2a"}
+    "subnetA" = {cidr_block = "192.168.0.0/26" , az = "us-west-2a", ip_publico = "true"}
+    "subnetB" = {cidr_block = "192.168.0.64/26", az = "us-west-2a", ip_publico = "false"}
+    "subnetC" = {cidr_block = "192.168.0.128/26", az = "us-west-2a", ip_publico = "true"}
   }
 }
 
