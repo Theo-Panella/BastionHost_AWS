@@ -3,6 +3,7 @@ provider "aws" {
   profile     = "default"
 }
 
+# ======================= AMI EC2 =======================
 data "aws_ami" "linux"{
   most_recent = var.instance_configurations.most_recent
   owners = ["amazon"]
@@ -16,16 +17,15 @@ data "aws_ami" "linux"{
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
-
 }
 
-# --- Componentes da Rede --- 
+# ======================= NETWORK COMPONENTS =======================
 resource "aws_vpc" "VPC1" {
   cidr_block = "192.168.0.0/24"
   instance_tenancy = "default"
 }
 
+# ======================= INTERNET GATEWAY =======================
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.VPC1.id
 
@@ -34,6 +34,7 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
+# ======================= SUBNETS =======================
 resource "aws_subnet" "subnets" {
   for_each = var.subnets
   vpc_id = aws_vpc.VPC1.id
@@ -46,9 +47,8 @@ resource "aws_subnet" "subnets" {
   }
 }
 
-# --- Politicas da Rede ---
-
-# --- ACLs ---
+# ======================= NETWORK POLICY =======================
+# ======================= ACLS =======================
 resource "aws_network_acl" "acl_subnetA" {
   vpc_id = aws_vpc.VPC1.id                             
   subnet_ids = [aws_subnet.subnets["subnetA"].id]           
@@ -130,6 +130,7 @@ resource "aws_network_acl" "acl_subnetC" {
   }
 }
 
+# ======================= ROUTE TABLE =======================
 resource "aws_route_table" "route_table" {
   vpc_id = aws_vpc.VPC1.id
   
@@ -137,10 +138,9 @@ resource "aws_route_table" "route_table" {
     cidr_block = aws_subnet.subnets["subnetA"].cidr_block
     gateway_id = aws_internet_gateway.gw.id
   }
-
 }
 
-# --- Instancias ----
+# ======================= INSTANCES =======================
 resource "aws_instance" "instances" {
   
   for_each = var.EC2_instances
@@ -154,7 +154,7 @@ resource "aws_instance" "instances" {
   }
 }
 
-# Chave SSH para conexão
+# ======================= SSH KEY =======================
 resource "aws_key_pair" "key_connection" {
   key_name   = "key-subnetA"
   public_key = file(".ssh/key_terraform.pub")  # caminho da sua chave local
