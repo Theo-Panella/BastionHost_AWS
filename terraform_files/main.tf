@@ -33,7 +33,7 @@ resource "aws_instance" "instances" {
   instance_type = var.instance_configurations.instance_type
   subnet_id = aws_subnet.subnets[each.value.subnet].id
 
-  tags = {
+  tags = {  
     Name = each.key
   }
 }
