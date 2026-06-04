@@ -3,6 +3,7 @@ provider "aws" {
   profile     = "default"
 }
 
+# ============= AMI =============
 data "aws_ami" "linux"{
   most_recent = var.instance_configurations.most_recent
   owners = ["amazon"]
@@ -16,11 +17,11 @@ data "aws_ami" "linux"{
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
-
 }
 
-# --- Componentes da Rede --- 
+# ============= Network Components =============
+
+# ============= VPC =============
 resource "aws_vpc" "VPC1" {
   cidr_block = "192.168.0.0/24"
   instance_tenancy = "default"
@@ -34,6 +35,7 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
+# ============= Subnets =============
 resource "aws_subnet" "subnets" {
   for_each = var.subnets
   vpc_id = aws_vpc.VPC1.id
@@ -46,90 +48,40 @@ resource "aws_subnet" "subnets" {
   }
 }
 
-# --- Politicas da Rede ---
+# ============= Network Policy =============
 
-# --- ACLs ---
-resource "aws_network_acl" "acl_subnetA" {
+# ============= ACLs =============
+resource "aws_network_acl" "acl_subnets" {
+  for_each = local.ACLs
   vpc_id = aws_vpc.VPC1.id                             
-  subnet_ids = [aws_subnet.subnets["subnetA"].id]           
-
-  egress {                                                   
-    protocol = "tcp"                                      
-    rule_no = 1
-    action = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port = 22
-    to_port = 22
+  subnet_ids = [aws_subnet.subnets[each.value.subnet_name].id]
+  
+  dynamic "egress" {
+    for_each = each.value.egress
+    content {
+      rule_no    = egress.value.rule_no
+      protocol   = egress.value.protocol
+      action     = egress.value.action
+      cidr_block = egress.value.cidr_block
+      from_port  = egress.value.from_port
+      to_port    = egress.value.to_port
+    }
   }
-
-  ingress {                                                  
-    protocol = "tcp"
-    rule_no = 2
-    action = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port = 22
-    to_port = 22
-  }
-
-  tags = {
-    Name = "ACL da Subnet A"
+  dynamic "ingress" {
+    for_each = each.value.ingress
+    content {
+      rule_no    = ingress.value.rule_no
+      protocol   = ingress.value.protocol
+      action     = ingress.value.action
+      cidr_block = ingress.value.cidr_block
+      from_port  = ingress.value.from_port
+      to_port    = ingress.value.to_port
+    }
   }
 }
 
-resource "aws_network_acl" "acl_subnetB" {
-  vpc_id = aws_vpc.VPC1.id                             
-  subnet_ids = [aws_subnet.subnets["subnetB"].id]           
 
-  egress {                                                   
-    protocol = "tcp"                                      
-    rule_no = 1
-    action = "allow"
-    cidr_block = aws_subnet.subnets["subnetA"].cidr_block
-    from_port = 22
-    to_port = 22
-  }
-
-  ingress {                                                  
-    protocol = "tcp"
-    rule_no = 2
-    action = "allow"
-    cidr_block = aws_subnet.subnets["subnetA"].cidr_block
-    from_port = 22
-    to_port = 22
-  }
-
-  tags = {
-    Name = "ACL da Subnet B"
-  }
-}
-
-resource "aws_network_acl" "acl_subnetC" {
-  vpc_id = aws_vpc.VPC1.id                             
-  subnet_ids = [aws_subnet.subnets["subnetC"].id]           
-
-  egress {                                                   
-    protocol = "tcp"                                      
-    rule_no = 1
-    action = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port = 22
-    to_port = 22
-  }
-
-  ingress {                                                  
-    protocol = "tcp"
-    rule_no = 2
-    action = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port = 22
-    to_port = 22
-  }
-
-  tags = {
-    Name = "ACL da Subnet C"
-  }
-}
-
+# ============= Route Table =============
 resource "aws_route_table" "route_table" {
   vpc_id = aws_vpc.VPC1.id
   
@@ -140,32 +92,39 @@ resource "aws_route_table" "route_table" {
 
 }
 
-resource "aws_route_table_association" "association_subnet_A" {
+# ============= Route Table association =============
+resource "aws_route_table_association" "association_subnet_global" {
+  for_each = {
+    for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == "true"
+  }
   route_table_id = aws_route_table.route_table.id
-  subnet_id = aws_subnet.subnets["subnetA"].id
+  subnet_id = aws_subnet.subnets[each.key].id
 }
 
-# --- Instancias ----
-resource "aws_security_group" "Bastion" {
+
+# ============= Instances =============
+
+# ============= Security Groups =============
+resource "aws_security_group" "sgs" {
   name = "Bastion-sg"
   vpc_id = aws_vpc.VPC1.id 
 
   ingress {
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
+    from_port = 0
+    to_port = 0
+    protocol = -1
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-
+# ============= Instances configs =============cccc
 resource "aws_instance" "instances" {
   
   for_each = var.EC2_instances
   ami = data.aws_ami.linux.id
   instance_type = var.instance_configurations.instance_type
   subnet_id = aws_subnet.subnets[each.value.subnet].id
-  vpc_security_group_ids = [aws_security_group.Bastion.id]
+  vpc_security_group_ids = [aws_security_group.sgs.id]
   key_name = aws_key_pair.key_connection.key_name
 
   tags = {
@@ -173,7 +132,7 @@ resource "aws_instance" "instances" {
   }
 }
 
-# Chave SSH para conexão
+# ============= Chave SSH para conexão =============
 resource "aws_key_pair" "key_connection" {
   key_name   = "key-subnetA"
   public_key = file(".ssh/terraform-key.pub")  # caminho da sua chave local
