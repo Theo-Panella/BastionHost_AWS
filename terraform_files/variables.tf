@@ -52,13 +52,14 @@ locals {
   }  
 }
 
+
+# ============= Instances =============
 variable "instance_configurations" {
   default = {
     most_recent = "true", instance_type = "t3.micro"
   }
 }
 
-# ============= Instances =============
 variable "EC2_instances" {
     default = {
         "Bastion" = {subnet = "subnetA", sg = "Bastion-Invasor", cidr_blocks = ["0.0.0.0/0"]}
