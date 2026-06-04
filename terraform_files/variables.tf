@@ -1,4 +1,4 @@
-# ---  Subnets  ---
+# =============  Subnets  =============
 variable "subnets" {
   default = {
     "subnetA" = {cidr_block = "192.168.0.0/26" , az = "us-west-2a", ip_publico = "true"}
@@ -7,19 +7,64 @@ variable "subnets" {
   }
 }
 
+# =============  NACLs  =============
+locals { 
+  ACLs = {
+      "ACL_subnetA" = {
+        subnet_name = "subnetA"
+        egress = [ 
+          # ============= Rule for Public connection =============
+          {rule_no = 1, protocol = -1, action = "allow", cidr_block = "0.0.0.0/0", from_port = 0, to_port = 0},
+
+          # ============= Rule for Subnet B connection =============
+          {rule_no = 2, protocol  = -1, action = "allow", cidr_block = var.subnets["subnetB"].cidr_block, from_port = 0, to_port = 0}, 
+        ],
+        ingress = [
+          # ============= Rule for Public connection =============
+          {rule_no = 1, protocol = -1, action = "allow", cidr_block = "0.0.0.0/0", from_port = 0, to_port = 0},
+
+          # ============= Rule for Subnet B connection =============
+          {rule_no = 2, protocol  = -1, action = "allow", cidr_block = var.subnets["subnetB"].cidr_block, from_port = 0, to_port = 0},
+        ]
+      }
+      "ACL_subnetB" = {
+        subnet_name = "subnetB"
+        egress = [ 
+          # ============= Rule for Subnet A connection =============
+          {rule_no = 1, protocol  = -1, action = "allow", cidr_block = var.subnets["subnetA"].cidr_block, from_port = 0, to_port = 0} 
+        ],
+        ingress = [
+          # ============= Rule for Subnet A connection =============
+          {rule_no = 1, protocol  = -1, action = "allow", cidr_block = var.subnets["subnetA"].cidr_block, from_port = 0, to_port = 0}
+        ]
+      }
+      "ACL_subnetC" = {
+        subnet_name = "subnetC"
+        egress = [ 
+          # ============= Rule for Public connection =============
+          {rule_no = 1, protocol  = -1, action = "allow", cidr_block = "0.0.0.0/0", from_port = 0, to_port = 0} 
+        ],
+        ingress = [
+          # ============= Rule for Public connection =============
+          {rule_no = 1, protocol  = -1, action = "allow", cidr_block = "0.0.0.0/0", from_port = 0, to_port = 0}
+        ]
+      }
+  }  
+}
+
 variable "instance_configurations" {
   default = {
     most_recent = "true", instance_type = "t3.micro"
   }
 }
 
-#  Instancias  
+# ============= Instances =============
 variable "EC2_instances" {
     default = {
-        "Bastion" = {subnet = "subnetA"}
-        "Invasor" = {subnet = "subnetC"}
-        "Server_1" = {subnet = "subnetB"}
-        "Server_2" = {subnet = "subnetB"}
+        "Bastion" = {subnet = "subnetA", sg = "Bastion-Invasor", cidr_blocks = ["0.0.0.0/0"]}
+        "Invasor" = {subnet = "subnetC", sg = "Bastion-Invasor", cidr_blocks = ["0.0.0.0/0"]}
+        "Server_1" = {subnet = "subnetB", sg = "Servers", cidr_blocks = ["0.0.0.0/0"]}
+        # He will go to VPC 2 in the next commits "Server_2" = {subnet = "subnetB", sg = "Servers", cidr_blocks = ["0.0.0.0/0"]}
     }
 }
 
