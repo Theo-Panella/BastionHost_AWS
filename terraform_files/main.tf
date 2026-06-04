@@ -3,7 +3,6 @@ provider "aws" {
   profile     = "default"
 }
 
-# ======================= AMI EC2 =======================
 data "aws_ami" "linux"{
   most_recent = var.instance_configurations.most_recent
   owners = ["amazon"]
@@ -17,15 +16,16 @@ data "aws_ami" "linux"{
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
+
 }
 
-# ======================= NETWORK COMPONENTS =======================
+# --- Componentes da Rede --- 
 resource "aws_vpc" "VPC1" {
   cidr_block = "192.168.0.0/24"
   instance_tenancy = "default"
 }
 
-# ======================= INTERNET GATEWAY =======================
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.VPC1.id
 
@@ -34,7 +34,6 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-# ======================= SUBNETS =======================
 resource "aws_subnet" "subnets" {
   for_each = var.subnets
   vpc_id = aws_vpc.VPC1.id
@@ -47,8 +46,9 @@ resource "aws_subnet" "subnets" {
   }
 }
 
-# ======================= NETWORK POLICY =======================
-# ======================= ACLS =======================
+# --- Politicas da Rede ---
+
+# --- ACLs ---
 resource "aws_network_acl" "acl_subnetA" {
   vpc_id = aws_vpc.VPC1.id                             
   subnet_ids = [aws_subnet.subnets["subnetA"].id]           
@@ -130,32 +130,51 @@ resource "aws_network_acl" "acl_subnetC" {
   }
 }
 
-# ======================= ROUTE TABLE =======================
 resource "aws_route_table" "route_table" {
   vpc_id = aws_vpc.VPC1.id
   
   route {
-    cidr_block = aws_subnet.subnets["subnetA"].cidr_block
+    cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.gw.id
+  }
+
+}
+
+resource "aws_route_table_association" "association_subnet_A" {
+  route_table_id = aws_route_table.route_table.id
+  subnet_id = aws_subnet.subnets["subnetA"].id
+}
+
+# --- Instancias ----
+resource "aws_security_group" "Bastion" {
+  name = "Bastion-sg"
+  vpc_id = aws_vpc.VPC1.id 
+
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-# ======================= INSTANCES =======================
+
 resource "aws_instance" "instances" {
   
   for_each = var.EC2_instances
   ami = data.aws_ami.linux.id
   instance_type = var.instance_configurations.instance_type
   subnet_id = aws_subnet.subnets[each.value.subnet].id
+  vpc_security_group_ids = [aws_security_group.Bastion.id]
   key_name = aws_key_pair.key_connection.key_name
 
-  tags = {  
+  tags = {
     Name = each.key
   }
 }
 
-# ======================= SSH KEY =======================
+# Chave SSH para conexão
 resource "aws_key_pair" "key_connection" {
   key_name   = "key-subnetA"
-  public_key = file(".ssh/key_terraform.pub")  # caminho da sua chave local
+  public_key = file(".ssh/terraform-key.pub")  # caminho da sua chave local
 }
