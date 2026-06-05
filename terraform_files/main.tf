@@ -82,7 +82,7 @@ resource "aws_network_acl" "acl_subnets" {
 
 
 # ============= Route Table =============
-resource "aws_route_table" "route_table" {
+resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.VPC1.id
   
   route {
@@ -92,15 +92,26 @@ resource "aws_route_table" "route_table" {
 
 }
 
+resource "aws_route_table" "private_route_table" {
+  vpc_id = aws_vpc.VPC1.id
+}
+
 # ============= Route Table association =============
-resource "aws_route_table_association" "association_subnet_global" {
+resource "aws_route_table_association" "public_association_subnet_global" {
   for_each = {
     for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == "true"
   }
-  route_table_id = aws_route_table.route_table.id
+  route_table_id = aws_route_table.public_route_table.id
   subnet_id = aws_subnet.subnets[each.key].id
 }
 
+resource "aws_route_table_association" "private_association_subnet_global" {
+  for_each = {
+    for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == "false"
+  }
+  route_table_id = aws_route_table.private_route_table.id
+  subnet_id = aws_subnet.subnets[each.key].id
+}
 
 # ============= Instances =============
 
@@ -110,6 +121,13 @@ resource "aws_security_group" "sgs" {
   vpc_id = aws_vpc.VPC1.id 
 
   ingress {
+    from_port = 0
+    to_port = 0
+    protocol = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
     from_port = 0
     to_port = 0
     protocol = -1
