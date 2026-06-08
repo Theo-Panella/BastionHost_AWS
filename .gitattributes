@@ -1,0 +1,9 @@
+# Garante que os .tf sejam detectados e contados
+*.tf  linguist-detectable=true
+*.tfvars linguist-detectable=true
+
+# Ignora os arquivos baixados/gerados pelo terraform init
+.terraform/**       linguist-generated=true
+*.tfstate           linguist-generated=true
+*.tfstate.backup    linguist-generated=true
+.terraform.lock.hcl linguist-generated=true
