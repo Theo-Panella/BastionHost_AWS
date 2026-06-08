@@ -1,9 +1,9 @@
 # =============  Subnets  =============
 variable "subnets" {
   default = {
-    "subnetA" = {cidr_block = "192.168.0.0/26" , az = "us-west-2a", ip_publico = "true"}
-    "subnetB" = {cidr_block = "192.168.0.64/26", az = "us-west-2a", ip_publico = "false"}
-    "subnetC" = {cidr_block = "192.168.0.128/26", az = "us-west-2a", ip_publico = "true"}
+    "subnetA" = {cidr_block = "192.168.0.0/26" , az = "us-west-2a", ip_publico = true}
+    "subnetB" = {cidr_block = "192.168.0.64/26", az = "us-west-2a", ip_publico = false}
+    "subnetC" = {cidr_block = "192.168.0.128/26", az = "us-west-2a", ip_publico = true}
   }
 }
 
@@ -56,16 +56,28 @@ locals {
 # ============= Instances =============
 variable "instance_configurations" {
   default = {
-    most_recent = "true", instance_type = "t3.micro"
+    most_recent = true, instance_type = "t3.micro"
   }
 }
 
 variable "EC2_instances" {
     default = {
-        "Bastion" = {subnet = "subnetA", sg = "Bastion-Invasor", cidr_blocks = ["0.0.0.0/0"]}
-        "Invasor" = {subnet = "subnetC", sg = "Bastion-Invasor", cidr_blocks = ["0.0.0.0/0"]}
-        "Server_1" = {subnet = "subnetB", sg = "Servers", cidr_blocks = ["0.0.0.0/0"]}
+        "Bastion" = {subnet = "subnetA" , sg="Bastion-Invasor"  , cidr_blocks = ["0.0.0.0/0"]}
+        "Invasor" = {subnet = "subnetC" , sg="Bastion-Invasor"  , cidr_blocks = ["0.0.0.0/0"]}
+        "Server_1" = {subnet = "subnetB", sg="Server_1"  , cidr_blocks = ["0.0.0.0/0"]}
         # He will go to VPC 2 in the next commits "Server_2" = {subnet = "subnetB", sg = "Servers", cidr_blocks = ["0.0.0.0/0"]}
     }
 }
 
+locals {
+  Security_groups = {
+        "Bastion-Invasor" = { 
+          ingress = [ {from_port = 0, to_port = 0, protocol = -1, cidr_blocks = ["0.0.0.0/0"] } ],
+          egress = [ {from_port = 0, to_port = 0, protocol = -1, cidr_blocks = ["0.0.0.0/0"] }],
+          },
+        "Server_1" = { 
+          ingress = [ {from_port = 0, to_port = 0, protocol = -1, cidr_blocks = [var.subnets["subnetB"].cidr_block] } ],
+          egress = [ {from_port = 0, to_port = 0, protocol = -1, cidr_blocks = [var.subnets["subnetB"].cidr_block] }]
+          }
+    }
+  }

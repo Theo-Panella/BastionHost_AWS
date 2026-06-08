@@ -51,6 +51,7 @@ resource "aws_subnet" "subnets" {
 # ============= Network Policy =============
 
 # ============= ACLs =============
+# Using dynamic for future hardcode mod
 resource "aws_network_acl" "acl_subnets" {
   for_each = local.ACLs
   vpc_id = aws_vpc.VPC1.id                             
@@ -99,7 +100,7 @@ resource "aws_route_table" "private_route_table" {
 # ============= Route Table association =============
 resource "aws_route_table_association" "public_association_subnet_global" {
   for_each = {
-    for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == "true"
+    for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == true
   }
   route_table_id = aws_route_table.public_route_table.id
   subnet_id = aws_subnet.subnets[each.key].id
@@ -107,7 +108,7 @@ resource "aws_route_table_association" "public_association_subnet_global" {
 
 resource "aws_route_table_association" "private_association_subnet_global" {
   for_each = {
-    for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == "false"
+    for sub_a, sub_b in var.subnets : sub_a => sub_b if sub_b.ip_publico == false
   }
   route_table_id = aws_route_table.private_route_table.id
   subnet_id = aws_subnet.subnets[each.key].id
@@ -117,32 +118,39 @@ resource "aws_route_table_association" "private_association_subnet_global" {
 
 # ============= Security Groups =============
 resource "aws_security_group" "sgs" {
-  name = "Bastion-sg"
-  vpc_id = aws_vpc.VPC1.id 
+  for_each = local.Security_groups
+  vpc_id = aws_vpc.VPC1.id
+  name = each.key
 
-  ingress {
-    from_port = 0
-    to_port = 0
-    protocol = -1
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "ingress" {
+    for_each = each.value.ingress
+      content {
+        from_port   = ingress.value.from_port
+        to_port     = ingress.value.to_port
+        protocol    = ingress.value.protocol
+        cidr_blocks = ingress.value.cidr_blocks
+    }
   }
-
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = -1
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = each.value.egress
+      content {
+        from_port   = egress.value.from_port
+        to_port     = egress.value.to_port
+        protocol    = egress.value.protocol
+        cidr_blocks = egress.value.cidr_blocks
+    }
   }
 }
 
-# ============= Instances configs =============cccc
+
+# ============= Instances configs =============
 resource "aws_instance" "instances" {
   
   for_each = var.EC2_instances
   ami = data.aws_ami.linux.id
   instance_type = var.instance_configurations.instance_type
   subnet_id = aws_subnet.subnets[each.value.subnet].id
-  vpc_security_group_ids = [aws_security_group.sgs.id]
+  vpc_security_group_ids = [aws_security_group.sgs[each.value.sg].id]
   key_name = aws_key_pair.key_connection.key_name
 
   tags = {
