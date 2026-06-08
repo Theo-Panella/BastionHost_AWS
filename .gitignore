@@ -4,3 +4,4 @@ terraform_files/*.lock.hcl
 *.tfstate
 *.tfstate.*
 .ssh
+*.lock.hcl
