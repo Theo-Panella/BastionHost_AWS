@@ -1,3 +1,11 @@
+# =============  VPC  =============
+variable "vpc_configs" {
+  default = {
+    "cidr_block" = "192.168.0.0/24"
+  }
+}
+
+
 # =============  Subnets  =============
 variable "subnets" {
   default = {
@@ -77,3 +85,9 @@ locals {
           }
     }
   }
+
+variable "key-ssh" {
+  default = {
+    "public-key" = file(".ssh/terraform-key.pub") 
+}
+}

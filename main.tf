@@ -23,7 +23,7 @@ data "aws_ami" "linux"{
 
 # ============= VPC =============
 resource "aws_vpc" "VPC1" {
-  cidr_block = "192.168.0.0/24"
+  cidr_block = var.vpc_configs.cidr_block
   instance_tenancy = "default"
 }
 
@@ -160,6 +160,6 @@ resource "aws_instance" "instances" {
 
 # ============= Chave SSH para conexão =============
 resource "aws_key_pair" "key_connection" {
-  key_name   = "key-subnetA"
-  public_key = file(".ssh/terraform-key.pub")  # caminho da sua chave local
+  key_name   = "SSH Key"
+  public_key = var.key-ssh.public-key
 }
