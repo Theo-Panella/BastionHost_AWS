@@ -1,4 +1,4 @@
-name: "Deploy for AWS - Testing level"
+name: "Deploy for AWS"
 on:
   push:
     branches:
