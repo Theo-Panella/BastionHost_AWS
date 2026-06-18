@@ -15,13 +15,19 @@ jobs:
       - name: "Checkout do código"
         uses: actions/checkout@v4
       
-      
       - name: "Configure AWS credentials"
         uses:  aws-actions/Configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.ARN }}
           aws-region: us-west-2
 
-      - name: "Message"
-        run: |
-          echo "Se pa deu certo!"
+      - name: "Running applies"
+        uses: hashicorp/setup-terraform@v3
+        with: 
+          terraform_version: 1.9.0
+
+      - name: "terraform init"
+        run: terraform init
+
+      - name: "terraform apply"
+        run: terraform apply
