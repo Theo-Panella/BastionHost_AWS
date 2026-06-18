@@ -7,10 +7,21 @@ on:
 jobs:
   Configuration:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: "Checkout do código"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       
+      - name: "Configure AWS credentials"
+        uses:  aws-actions/Configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ARN }}
+          aws-region: us-west-2
 
+      - name: "Message"
+        run: |
+          echo "Se pa deu certo!"
