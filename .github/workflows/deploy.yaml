@@ -14,7 +14,15 @@ jobs:
     steps:
       - name: "Checkout do código"
         uses: actions/checkout@v4
-      
+
+      - name: "defining ssh key-conn file"
+        run: |
+          mkdir .ssh 
+          echo "${{ secrets.SSH_KEY_EC2_AWS_PRIVATE }}" > .ssh/terraform-key
+          echo "${{ secrets.SSH_KEY_EC2_AWS }}" > .ssh/terraform-key.pub
+          chmod 600 ~/.ssh/terraform-key
+          chmod 644 ~/.ssh/terraform-key.pub
+
       - name: "Configure AWS credentials"
         uses:  aws-actions/Configure-aws-credentials@v4
         with:
