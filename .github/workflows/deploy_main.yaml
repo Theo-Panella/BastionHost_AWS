@@ -5,8 +5,7 @@ on:
       - main
     
 jobs:
-  if_merged:
-    if: github.events.pull_request.merged == true
+  Configuration:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
