@@ -85,7 +85,3 @@ locals {
           }
     }
   }
-
-variable "public-key" {
-  type = string
-}
