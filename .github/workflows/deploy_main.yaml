@@ -1,8 +1,8 @@
-name: "Deploy in AWS production enviroment"
+name: "Deploy for AWS in production enviroment"
 on:
-  pull_request:
-    types:
-      - closed
+  push:
+    branches:
+      - main
     
 jobs:
   if_merged:
