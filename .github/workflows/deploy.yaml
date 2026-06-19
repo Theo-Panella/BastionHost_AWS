@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: "defining ssh credentials for ec2"
-        TF_VAR_public_key: ${{ secrets.SSH_KEY_EC2_AWS }}.
+        TF_VAR_public_key: ${{ secrets.SSH_KEY_EC2_AWS }}
       #  run: |
       #    mkdir .ssh 
       #    echo "${{ secrets.SSH_KEY_EC2_AWS_PRIVATE }}" > .ssh/terraform-key
