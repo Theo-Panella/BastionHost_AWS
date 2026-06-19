@@ -38,4 +38,9 @@ jobs:
         run: terraform init
 
       - name: "terraform plan"
-        run: terraform plan -auto-approve
+        id: plan
+        run: |
+          terraform plan -no-color -out=tfplan > plan_terraform.txt
+          echo "stdout<<EOF" >> "$GITHUB_OUTPUT"
+          cat plan_terraform.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
