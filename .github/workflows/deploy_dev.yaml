@@ -41,4 +41,4 @@ jobs:
         id: plan
         run: |
           terraform plan -no-color -out=tfplan > plan_terraform.txt
-          cat plan_terraform.txt >> "$GITHUB_OUTPUT"
+          cat plan_terraform.txt
