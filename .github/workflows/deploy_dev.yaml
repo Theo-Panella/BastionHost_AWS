@@ -1,0 +1,46 @@
+name: "Deploy for AWS in dev enviroment"
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  Configuration:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: "Checkout do código"
+        uses: actions/checkout@v4
+
+      - name: "defining ssh credentials for ec2"
+        run: |
+          mkdir .ssh 
+          echo "${{ secrets.SSH_KEY_EC2_AWS_PRIVATE }}" > .ssh/terraform-key
+          echo "${{ secrets.SSH_KEY_EC2_AWS }}" > .ssh/terraform-key.pub
+          chmod 600 .ssh/terraform-key
+          chmod 644 .ssh/terraform-key.pub
+
+      - name: "Configure AWS credentials"
+        uses:  aws-actions/Configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ARN }}
+          aws-region: us-west-2
+
+      - name: "Running applies"
+        uses: hashicorp/setup-terraform@v3
+        with: 
+          terraform_version: 1.9.0
+
+      - name: "terraform init"
+        run: terraform init
+
+      - name: "terraform plan"
+        id: plan
+        run: |
+          terraform plan -no-color -out=tfplan > plan_terraform.txt
+          echo "stdout<<EOF" >> "$GITHUB_OUTPUT"
+          cat plan_terraform.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
