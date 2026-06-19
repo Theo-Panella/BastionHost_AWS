@@ -86,8 +86,6 @@ locals {
     }
   }
 
-variable "key-ssh" {
-  default = {
-    "public-key" = file(".ssh/terraform-key.pub") 
-}
+variable "public-key" {
+  type = string
 }

@@ -161,5 +161,5 @@ resource "aws_instance" "instances" {
 # ============= Chave SSH para conexão =============
 resource "aws_key_pair" "key_connection" {
   key_name   = "SSH Key"
-  public_key = var.key-ssh.public-key
+  public_key = var.public-key
 }
