@@ -1,11 +1,12 @@
-name: "Deploy for AWS in Production enviroment"
+name: "Deploy in AWS production enviroment"
 on:
   pull_request:
-    branches:
-      - main
+    types:
+      - closed
     
 jobs:
-  Configuration:
+  if_merged:
+    if: github.events.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -45,7 +46,7 @@ jobs:
           cat plan_terraform.txt >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: "Confirm apply"
+      - name: "Confirm plan"
         id: interactive-inputs
         uses: boasihq/interactive-inputs@v2
         with: 
@@ -67,6 +68,6 @@ jobs:
                   type: boolean
                   required: true
 
-      - name: "terraform apply"
+      - name: "Terraform apply"
         if: ${{ steps.interactive-inputs.outputs.verify == 'true' }}
-        run: terraform apply tfplan 
+        run: terraform apply tfplan
